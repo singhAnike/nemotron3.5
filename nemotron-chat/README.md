@@ -4,13 +4,7 @@ A self-hosted chat UI for NVIDIA's Nemotron models — streaming responses,
 markdown/code rendering, and file/image upload for context, all in a
 single small FastAPI + vanilla JS app (no build step).
 
-## 1. Rotate your API key first
-
-The key in your original script was pasted in plain text, which means it's
-been exposed. Go to https://build.nvidia.com, revoke that key, and generate
-a new one before using it here.
-
-## 2. Set up the backend
+## 1. Set up the backend
 
 ```bash
 cd backend
@@ -23,7 +17,7 @@ export NVIDIA_API_KEY="nvapi-your-new-key-here"   # Windows (PowerShell): $env:N
 uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## 3. Open the app
+## 2. Open the app
 
 Go to **http://localhost:8000** — the FastAPI server serves the frontend
 directly, so there's nothing else to run.
