@@ -41,6 +41,31 @@ directly, so there's nothing else to run.
   and syntax-highlighted code via `marked.js` and `highlight.js` (loaded
   from a CDN).
 
+## Agent mode — Nemotron working directly in your codebase
+
+Switch to **Agent** in the left rail, then paste the absolute path to a
+project folder on the machine running the server and click **Open**. From
+there you can ask things like "find where the auth token is validated" or
+"add input validation to the signup form."
+
+How it works, and what's deliberately limited:
+
+- The model gets four tools: `list_directory`, `read_file`, `search_code`
+  (all auto-run, read-only) and `write_file` / `edit_file`.
+- **No shell/command execution** — the agent can't run tests, install
+  packages, or execute anything. It can only read and edit files.
+- **Every write or edit needs your approval.** When the model wants to
+  change a file, it stops and shows you a diff with Approve/Reject
+  buttons before anything touches disk. Rejecting tells the model to try
+  a different approach rather than repeating the same edit.
+- All file access is sandboxed to the workspace folder you opened — paths
+  that try to escape it (e.g. `../../etc/passwd`) are blocked server-side.
+- This is a lighter-weight version of what Codex/Claude Code do: no
+  planning UI, no test-running, no multi-file transaction rollback. It's
+  a solid base for straightforward "find this, then change that" work;
+  for anything requiring running code to verify a change, you'll still
+  want to do that yourself for now.
+
 ## Notes
 
 - **Image support depends on the model.** Nemotron-3.5-Lightning may or

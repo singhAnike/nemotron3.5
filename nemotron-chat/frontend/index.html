@@ -26,10 +26,24 @@
       </div>
     </div>
 
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="chat" id="mode-chat">Chat</button>
+      <button class="mode-btn" data-mode="agent" id="mode-agent">Agent</button>
+    </div>
+
     <button class="new-chat-btn" id="new-chat">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       New session
     </button>
+
+    <div class="rail-section" id="workspace-section" hidden>
+      <span class="rail-label">Workspace</span>
+      <div class="workspace-form">
+        <input type="text" id="workspace-path" placeholder="/path/to/your/project" />
+        <button id="workspace-set-btn">Open</button>
+      </div>
+      <div class="workspace-active" id="workspace-active"></div>
+    </div>
 
     <div class="rail-section">
       <span class="rail-label">Status</span>
@@ -40,7 +54,7 @@
     </div>
 
     <div class="rail-footer">
-      <span class="rail-hint">Files stay local to this server.<br>Nothing is stored between sessions.</span>
+      <span class="rail-hint" id="rail-hint">Files stay local to this server.<br>Nothing is stored between sessions.</span>
     </div>
   </aside>
 
@@ -76,5 +90,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="agent.js"></script>
 </body>
 </html>

@@ -24,6 +24,8 @@ from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from pydantic import BaseModel
 
+import agent as A
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
@@ -163,6 +165,59 @@ async def upload(file: UploadFile = File(...)):
         "text": text,
         "truncated": truncated,
     }
+
+
+# ---------------------------------------------------------------------------
+# Coding agent — explore + edit a real codebase, with approval on writes
+# ---------------------------------------------------------------------------
+
+
+class WorkspaceRequest(BaseModel):
+    path: str
+
+
+@app.post("/api/agent/workspace")
+def set_workspace(req: WorkspaceRequest):
+    p = Path(req.path).expanduser().resolve()
+    if not p.exists() or not p.is_dir():
+        raise HTTPException(status_code=400, detail=f"'{req.path}' is not a directory that exists on the server.")
+    session = A.create_session(str(p))
+    return {"session_id": session.id, "workspace": str(p)}
+
+
+class AgentMessageRequest(BaseModel):
+    session_id: str
+    text: str
+
+
+@app.post("/api/agent/message")
+def agent_message(req: AgentMessageRequest):
+    session = A.get_session(req.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Unknown session. Set a workspace first.")
+    if session.loop is not None:
+        raise HTTPException(status_code=409, detail="An approval is still pending on this session.")
+
+    session.messages.append({"role": "user", "content": req.text})
+    return StreamingResponse(A.run_loop(client, MODEL, session), media_type="text/event-stream")
+
+
+class AgentApproveRequest(BaseModel):
+    session_id: str
+    tool_call_id: str
+    approved: bool
+
+
+@app.post("/api/agent/approve")
+def agent_approve(req: AgentApproveRequest):
+    session = A.get_session(req.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Unknown session.")
+
+    return StreamingResponse(
+        A.resume_after_approval(client, MODEL, session, req.tool_call_id, req.approved),
+        media_type="text/event-stream",
+    )
 
 
 # ---------------------------------------------------------------------------

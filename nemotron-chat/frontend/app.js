@@ -5,6 +5,7 @@
 let history = [];        // [{role, content}] sent to the backend
 let pendingAttachments = []; // [{kind:'image'|'text', filename, data_url|text}]
 let isStreaming = false;
+let mode = 'chat';       // 'chat' | 'agent'
 
 // ---------------------------------------------------------------------------
 // DOM refs
@@ -50,6 +51,22 @@ promptEl.addEventListener('keydown', (e) => {
 
 sendBtn.addEventListener('click', send);
 newChatBtn.addEventListener('click', resetChat);
+
+document.getElementById('mode-chat').addEventListener('click', () => setMode('chat'));
+document.getElementById('mode-agent').addEventListener('click', () => setMode('agent'));
+
+function setMode(next) {
+  if (mode === next) return;
+  mode = next;
+  document.getElementById('mode-chat').classList.toggle('active', mode === 'chat');
+  document.getElementById('mode-agent').classList.toggle('active', mode === 'agent');
+  document.getElementById('workspace-section').hidden = mode !== 'agent';
+  promptEl.placeholder = mode === 'agent' ? 'Ask the agent to explore or change your code…' : 'Message Nemotron…';
+  document.getElementById('rail-hint').innerHTML = mode === 'agent'
+    ? 'Reads/edits are sandboxed to the workspace folder you open.<br>File edits need your approval before they\u2019re written.'
+    : 'Files stay local to this server.<br>Nothing is stored between sessions.';
+  resetChat();
+}
 
 // ---------------------------------------------------------------------------
 // File attach
@@ -120,6 +137,15 @@ function truncateName(name) {
 async function send() {
   const text = promptEl.value.trim();
   if ((!text && pendingAttachments.length === 0) || isStreaming) return;
+
+  if (mode === 'agent') {
+    if (!text) return;
+    document.getElementById('empty-state')?.remove();
+    promptEl.value = '';
+    promptEl.style.height = 'auto';
+    await window.agentSend(text);
+    return;
+  }
 
   emptyStateEl?.remove();
 
@@ -267,11 +293,14 @@ function resetChat() {
   history = [];
   pendingAttachments = [];
   attachmentsEl.innerHTML = '';
+  window.agentReset?.();
+
+  const isAgent = mode === 'agent';
   messagesEl.innerHTML = `
     <div class="empty-state" id="empty-state">
       <div class="empty-mark">N</div>
-      <h1>Nemotron console</h1>
-      <p>Ask a question, drop in a doc, or attach an image for context.</p>
+      <h1>${isAgent ? 'Agent console' : 'Nemotron console'}</h1>
+      <p>${isAgent ? 'Open a workspace folder on the left, then ask the agent to explore or change your code.' : 'Ask a question, drop in a doc, or attach an image for context.'}</p>
     </div>`;
   setStatus('ready', 'ready');
 }
